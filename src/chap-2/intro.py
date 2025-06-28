@@ -1,1 +1,4 @@
-print('Hello world!')
+import torch
+
+x = torch.arange(12)
+print('x:', x)
