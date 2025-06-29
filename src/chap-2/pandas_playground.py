@@ -101,4 +101,9 @@ df5 /= 100 # Arithmetic operations with scalars are applied element-wise.
 
 # Transposing a dataframe
 transposed_df3 = df3[:5].T
-print(transposed_df3)
+
+# Getting numpy ndarray from DataFrame.
+# NOTE: This is useful when turning DataFrame instance to a Pytorch tensor
+# eg.) torch.tensor(df.values, dtype=torch.float64) - dtype here is used to convert elements.
+ndarr = transposed_df3.values
+print(ndarr)

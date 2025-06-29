@@ -1,5 +1,6 @@
 from typing import Callable
 import os
+import torch
 
 # reference - Basic data structures in pandas (Series, Dataframe)
 # https://pandas.pydata.org/docs/user_guide/dsintro.html
@@ -24,12 +25,64 @@ def generate_csv():
 
 def read_csv():
   import pandas as pd
+  # NOTE: pd.read_csv reads the csv file as pandas DataFrame instance.
   data = pd.read_csv(csv_path)
-  print(data['NumRooms'][1])
+
+  # Lets populate the missing data here!
+  # inputs here is another Data frame, outputs here is a Series
+  inputs, outputs = data.iloc[:, 0:2], data.iloc[:, 2]
+
+  first_input = inputs['NumRooms'] # select a column as a Series
+
+  # use Series.fillna(), Series.mean() methods
+  inputs['NumRooms'] = first_input.fillna(first_input.mean())
+
+  inputs = pd.get_dummies(inputs, columns=['Alley'], dtype=int) # dtype=int here converts True/False to 1 and 0.
+
+  tensor_inputs = torch.tensor(inputs.values, dtype=torch.int32) # dtype parameter here is used to convert the elements.
+  tensor_outputs = torch.tensor(outputs.values, dtype=torch.float32)
+  print(tensor_inputs)
+  print(tensor_outputs)
 
 def run():
   if not os.path.exists(csv_path):
     generate_csv()
   read_csv()
 
-run()
+# run()
+
+def run2 ():
+  csv_path = os.path.join(data_dir_path, 'random_csv.csv')
+
+  if not os.path.exists(csv_path): return False
+
+  with open(csv_path) as f:
+    from math import isnan
+    import pandas as pd
+
+    # Helper lambdas
+    _isnan: Callable[[any], bool] = lambda x: isinstance(x, float) and isnan(x)
+    sum_ascii = lambda s: sum(ord(c) for c in s)
+
+    # loads csv data as a pandas dataframe
+    data = pd.read_csv(csv_path)
+    most_nan = ('', 0)
+
+    for col_name in data.columns:
+      nans = [1 for el in data[col_name].values if _isnan(el)]
+      
+      if len(nans) >= most_nan[1]:
+        most_nan = (col_name, len(nans))
+    
+      random_val = next((a for a in data[col_name].values if not _isnan(a)), 'abcd1234')
+
+      # in-place application of sum_ascii function.
+      data[col_name][:] = data[col_name].fillna(random_val).apply(sum_ascii) # Series.apply
+
+    print(most_nan)
+    del data[most_nan[0]]
+
+    data_tensor = torch.from_numpy(data.values.astype(int))  # DataFrame.values returns a numpy ndarray of the dataframe table.
+    print(data_tensor)
+
+run2()
